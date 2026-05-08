@@ -29,9 +29,19 @@ exports.getProgress = async (req, res) => {
   let recentTopics = [];
 
   try {
-    // Topics studied: count of unique inputs
-    const inputs = await Input.find({ userId: req.user.userId });
-    topicsStudied = inputs.length;
+    // Recent topics: last 5 unique input values that have associated notes or plans
+    const notesWithInput = await Note.find({ userId: req.user.userId }).select('inputId').lean();
+    const plansWithInput = await Plan.find({ userId: req.user.userId }).select('inputId').lean();
+    const inputIdsWithContent = [
+      ...new Set([
+        ...notesWithInput.map(n => n.inputId?.toString()),
+        ...plansWithInput.map(p => p.inputId?.toString())
+      ])
+    ].filter(Boolean);
+
+    // Topics studied: count of unique inputs that have notes or plans
+    topicsStudied = inputIdsWithContent.length;
+
     const plans = await Plan.find({ userId: req.user.userId });
     recentStudyPlan = plans.slice(-3).map(p => p.step || p.topic || p.title).reverse();
 
@@ -44,16 +54,6 @@ exports.getProgress = async (req, res) => {
 
     // Revision completed: count of completed revisions
     revisionCompleted = await Revision.countDocuments({ userId: req.user.userId, status: 'completed' });
-
-    // Recent topics: last 5 unique input values that have associated notes or plans
-    const notesWithInput = await Note.find({ userId: req.user.userId }).select('inputId').lean();
-    const plansWithInput = await Plan.find({ userId: req.user.userId }).select('inputId').lean();
-    const inputIdsWithContent = [
-      ...new Set([
-        ...notesWithInput.map(n => n.inputId?.toString()),
-        ...plansWithInput.map(p => p.inputId?.toString())
-      ])
-    ].filter(Boolean);
 
     const recentInputs = await Input.find({ 
       userId: req.user.userId,

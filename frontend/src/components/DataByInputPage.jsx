@@ -99,9 +99,11 @@ export default function DataByInputPage({ type, input, onBack }) {
                       }
                       if (!inline) {
                         return (
-                          <pre className="bg-gray-100 text-gray-800 rounded-lg p-4 overflow-x-auto my-3 border border-gray-200">
-                            <code className={className} style={{ color: 'inherit', background: 'none' }} {...props}>{children}</code>
-                          </pre>
+                          <div className="bg-gray-100 text-gray-800 rounded-lg p-4 overflow-x-auto my-3 border border-gray-200">
+                            <pre className="m-0 bg-transparent p-0 border-none shadow-none">
+                              <code className={className} style={{ color: 'inherit', background: 'none' }} {...props}>{children}</code>
+                            </pre>
+                          </div>
                         );
                       }
                       return <code className={className} {...props}>{children}</code>;

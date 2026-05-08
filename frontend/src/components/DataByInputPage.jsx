@@ -88,7 +88,7 @@ export default function DataByInputPage({ type, input, onBack }) {
           ))}
           {type === 'notes' && data.map((note, idx) => (
             <Card key={note._id || idx} title={<span className="text-xl font-black text-gray-900 mb-2">{note.title}</span>}>
-              <div className="prose max-w-none prose-pre:bg-transparent prose-pre:p-0 text-black !opacity-100">
+              <div className="prose max-w-none prose-pre:bg-gray-100 prose-pre:text-gray-800 prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded prose-code:font-semibold prose-code:before:content-none prose-code:after:content-none text-black !opacity-100">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -96,6 +96,13 @@ export default function DataByInputPage({ type, input, onBack }) {
                       const match = /language-(\w+)/.exec(className || '');
                       if (match && match[1] === 'mermaid') {
                         return <Mermaid chart={String(children).trim()} />;
+                      }
+                      if (!inline) {
+                        return (
+                          <pre className="bg-gray-100 text-gray-800 rounded-lg p-4 overflow-x-auto my-3 border border-gray-200">
+                            <code className={className} style={{ color: 'inherit', background: 'none' }} {...props}>{children}</code>
+                          </pre>
+                        );
                       }
                       return <code className={className} {...props}>{children}</code>;
                     }

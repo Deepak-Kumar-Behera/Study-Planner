@@ -15,7 +15,7 @@ exports.getProgress = async (req, res) => {
         total: totalPossible > 0 ? Math.round((totalPossible / submissions.length) * 100) / 100 : 0
       };
     }
-  } catch {}
+  } catch { }
   // Import models
   const Note = require('../models/Note');
   const Plan = require('../models/Plan');
@@ -45,21 +45,36 @@ exports.getProgress = async (req, res) => {
     // Revision completed: count of completed revisions
     revisionCompleted = await Revision.countDocuments({ userId: req.user.userId, status: 'completed' });
 
-    // Recent inputs: last 3 unique inputIds from notes and plans
-    const noteInputIds = notes.map(n => n.inputId).filter(Boolean);
-    const planInputIds = plans.map(p => p.inputId).filter(Boolean);
-    const allInputIds = Array.from(new Set([...noteInputIds, ...planInputIds])).slice(-3).reverse();
-    // Fetch input values for recent inputIds
-    const recentInputs = await Input.find({ _id: { $in: allInputIds } });
+    // Recent topics: last 5 unique input values that have associated notes or plans
+    const notesWithInput = await Note.find({ userId: req.user.userId }).select('inputId').lean();
+    const plansWithInput = await Plan.find({ userId: req.user.userId }).select('inputId').lean();
+    const inputIdsWithContent = [
+      ...new Set([
+        ...notesWithInput.map(n => n.inputId?.toString()),
+        ...plansWithInput.map(p => p.inputId?.toString())
+      ])
+    ].filter(Boolean);
+
+    const recentInputs = await Input.find({ 
+      userId: req.user.userId,
+      _id: { $in: inputIdsWithContent }
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select('value')
+      .lean();
+    
     recentTopics = recentInputs.map(i => i.value);
-  } catch {}
+
+  } catch { }
+
+
 
   res.json({
     topicsStudied,
     notesGenerated,
     quizAttempts,
     revisionCompleted,
-    recentStudyPlan,
     recentTopics,
     quizScore
   });

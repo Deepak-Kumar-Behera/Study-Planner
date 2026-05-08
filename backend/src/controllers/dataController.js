@@ -4,10 +4,18 @@ const Plan = require('../models/Plan');
 const Quiz = require('../models/Quiz');
 const Revision = require('../models/Revision');
 
-// Get all inputs for the current user
+// Get all inputs for the current user (only those with notes or plans)
 exports.getAllInputs = async (req, res) => {
   try {
-    const inputs = await Input.find({ userId: req.user.userId }).sort({ createdAt: -1 });
+    const noteIds = await Note.distinct('inputId', { userId: req.user.userId });
+    const planIds = await Plan.distinct('inputId', { userId: req.user.userId });
+    const combinedIds = [...new Set([...noteIds, ...planIds])].filter(Boolean);
+
+    const inputs = await Input.find({ 
+      userId: req.user.userId, 
+      _id: { $in: combinedIds } 
+    }).sort({ createdAt: -1 });
+
     res.json(inputs);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch inputs.' });
@@ -37,9 +45,15 @@ exports.getNoteInputs = async (req, res) => {
 
 exports.getQuizInputs = async (req, res) => {
   try {
-    // Return all inputs for this user so every topic is accessible in the quiz section,
-    // even if no quiz has been generated for it yet.
-    const inputs = await Input.find({ userId: req.user.userId }).sort({ createdAt: -1 });
+    const noteIds = await Note.distinct('inputId', { userId: req.user.userId });
+    const planIds = await Plan.distinct('inputId', { userId: req.user.userId });
+    const combinedIds = [...new Set([...noteIds, ...planIds])].filter(Boolean);
+
+    const inputs = await Input.find({ 
+      userId: req.user.userId, 
+      _id: { $in: combinedIds } 
+    }).sort({ createdAt: -1 });
+
     res.json(inputs);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch quiz inputs.' });

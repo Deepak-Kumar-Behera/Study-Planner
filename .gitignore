@@ -1,0 +1,44 @@
+# Node
+node_modules/
+.env
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs
+*.log
+
+# Dependency directories
+backend/node_modules/
+frontend/node_modules/
+
+# Build outputs
+backend/dist/
+frontend/build/
+
+# OS files
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Misc
+*.local
+*.cache
+
+# Optional: Ignore coverage reports
+coverage/
+
+# Optional: Ignore production files
+*.tgz
+
+# Ignore environment files
+backend/.env
+frontend/.env

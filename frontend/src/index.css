@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .prose p, 
+  .prose li, 
+  .prose strong, 
+  .prose em, 
+  .prose span,
+  .prose ul,
+  .prose ol {
+    color: #000000 !important;
+    opacity: 1 !important;
+  }
+}

@@ -18,7 +18,7 @@ exports.getAllInputs = async (req, res) => {
 exports.getPlanInputs = async (req, res) => {
   try {
     const inputIds = await Plan.distinct('inputId', { userId: req.user.userId });
-    const inputs = await Input.find({ _id: { $in: inputIds } });
+    const inputs = await Input.find({ _id: { $in: inputIds } }).sort({ createdAt: -1 });
     res.json(inputs);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch plan inputs.' });
@@ -28,7 +28,7 @@ exports.getPlanInputs = async (req, res) => {
 exports.getNoteInputs = async (req, res) => {
   try {
     const inputIds = await Note.distinct('inputId', { userId: req.user.userId });
-    const inputs = await Input.find({ _id: { $in: inputIds } });
+    const inputs = await Input.find({ _id: { $in: inputIds } }).sort({ createdAt: -1 });
     res.json(inputs);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch note inputs.' });
@@ -37,8 +37,9 @@ exports.getNoteInputs = async (req, res) => {
 
 exports.getQuizInputs = async (req, res) => {
   try {
-    const inputIds = await Quiz.distinct('inputId', { userId: req.user.userId });
-    const inputs = await Input.find({ _id: { $in: inputIds } });
+    // Return all inputs for this user so every topic is accessible in the quiz section,
+    // even if no quiz has been generated for it yet.
+    const inputs = await Input.find({ userId: req.user.userId }).sort({ createdAt: -1 });
     res.json(inputs);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch quiz inputs.' });
@@ -48,7 +49,7 @@ exports.getQuizInputs = async (req, res) => {
 exports.getRevisionInputs = async (req, res) => {
   try {
     const inputIds = await Revision.distinct('inputId', { userId: req.user.userId });
-    const inputs = await Input.find({ _id: { $in: inputIds } });
+    const inputs = await Input.find({ _id: { $in: inputIds } }).sort({ createdAt: -1 });
     res.json(inputs);
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch revision inputs.' });

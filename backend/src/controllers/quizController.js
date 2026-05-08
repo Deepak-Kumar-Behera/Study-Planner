@@ -1,6 +1,34 @@
 const Quiz = require('../models/Quiz');
 const QuizSubmission = require('../models/QuizSubmission');
+const TopicDifficulty = require('../models/TopicDifficulty');
 const Input = require('../models/Input');
+
+/**
+ * Calculate and persist difficulty for a user+topic based on the score just achieved.
+ * Uses only the current submission so a good score always yields the right difficulty.
+ */
+async function recalculateDifficulty(userId, inputId, score, total) {
+  if (!total || total === 0) return 'medium';
+
+  const percent = (score / total) * 100;
+
+  let newDifficulty;
+  if (percent >= 75) {
+    newDifficulty = 'hard';
+  } else if (percent >= 40) {
+    newDifficulty = 'medium';
+  } else {
+    newDifficulty = 'easy';
+  }
+
+  await TopicDifficulty.findOneAndUpdate(
+    { userId, inputId },
+    { difficulty: newDifficulty, updatedAt: new Date() },
+    { upsert: true, new: true }
+  );
+
+  return newDifficulty;
+}
 
 // Submit quiz answers and calculate score
 exports.submitQuiz = async (req, res) => {
@@ -36,11 +64,19 @@ exports.submitQuiz = async (req, res) => {
       score: correctCount,
       total: answers.length
     });
+
+    // Recalculate and persist difficulty after every submission
+    let newDifficulty = null;
+    if (inputId) {
+      newDifficulty = await recalculateDifficulty(userId, inputId, correctCount, answers.length);
+    }
+
     res.json({
       submissionId: submission._id,
       score: correctCount,
       total: answers.length,
-      answers: answerResults
+      answers: answerResults,
+      difficulty: newDifficulty,   // tell the frontend the updated difficulty
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to submit quiz.' });
@@ -56,5 +92,18 @@ exports.getLatestQuizScore = async (req, res) => {
     res.json({ score: latest.score, total: latest.total });
   } catch (err) {
     res.status(500).json({ message: 'Failed to fetch quiz score.' });
+  }
+};
+
+// GET /api/quiz/difficulty/:inputId
+// Returns the current difficulty level for a topic, defaulting to 'medium'
+exports.getTopicDifficulty = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { inputId } = req.params;
+    const doc = await TopicDifficulty.findOne({ userId, inputId });
+    res.json({ difficulty: doc ? doc.difficulty : 'medium' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch difficulty.' });
   }
 };

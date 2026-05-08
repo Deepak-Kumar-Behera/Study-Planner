@@ -4,6 +4,7 @@ const Note = require('../models/Note');
 const Quiz = require('../models/Quiz');
 const Revision = require('../models/Revision');
 const Input = require('../models/Input');
+const TopicDifficulty = require('../models/TopicDifficulty');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-lite:generateContent';
@@ -38,7 +39,7 @@ For the notes:
 IMPORTANT rules for Mermaid diagrams:
 - Only use "graph TD" or "graph LR" (flowchart) or "sequenceDiagram" types.
 - Node labels must NOT contain parentheses (), pipe characters |, colons :, semicolons ;, or any special characters.
-- Use only plain alphanumeric text and spaces inside double-quoted labels, e.g. A["My Label"].
+- NEVER use double quotes inside node labels. Use plain text only, e.g. A[My Label] (no quotes around the label text).
 - Every node ID must be a simple alphanumeric string with no spaces (e.g. A, B, nodeX).
 - Do NOT use subgraph.
 - Do NOT use classDef, class, or style statements.
@@ -47,9 +48,9 @@ IMPORTANT rules for Mermaid diagrams:
 - If in doubt, use a markdown table or bullet list instead of a diagram.
 - Example of valid diagram:
   graph TD
-    A["Input Data"] --> B["Process Step"]
-    B --> C["Output Result"]
-- Example of INVALID node (do not use): A(Disk Block 0 | Next: 2)
+    A[Input Data] --> B[Process Step]
+    B --> C[Output Result]
+- Example of INVALID node (do not use): A["quoted"] or A(Disk Block 0 | Next: 2)
 
 Do NOT generate any quiz questions in this response.
 Return ONLY the JSON object, no explanation or markdown outside the JSON.
@@ -68,6 +69,14 @@ function robustCleanAIResponse(aiText) {
   }
   // Replace all inner triple backticks with a placeholder (to avoid breaking JSON)
   cleaned = cleaned.replace(/```/g, '`CODEBLOCK`');
+  // Escape any unescaped double quotes that appear inside CODEBLOCK sections.
+  // The AI sometimes uses A["label"] in Mermaid or unescaped " in code samples,
+  // which breaks JSON.parse() because those " are inside a JSON string value.
+  cleaned = cleaned.replace(/`CODEBLOCK`([\s\S]*?)`CODEBLOCK`/g, (match, code) => {
+    // Escape only truly unescaped quotes (not already preceded by \)
+    const escaped = code.replace(/(?<!\\)"/g, '\\"');
+    return '`CODEBLOCK`' + escaped + '`CODEBLOCK`';
+  });
   // Fix invalid JSON escape sequences produced by AI (e.g. \| \- \: at end of markdown table rows)
   // Valid JSON escapes are: \" \\ \/ \b \f \n \r \t \uXXXX — anything else is invalid
   cleaned = cleaned.replace(/\\([^"\\/bfnrtu])/g, '$1');
@@ -189,10 +198,38 @@ exports.generateQuiz = async (req, res) => {
       notesContent = notes.map(n => `## ${n.title}\n${n.content}`).join('\n\n');
     }
 
+    // Look up adaptive difficulty for this user + topic
+    const difficultyDoc = await TopicDifficulty.findOne({ userId, inputId });
+    const difficulty = difficultyDoc ? difficultyDoc.difficulty : 'medium';
+
+    const difficultyGuidelines = {
+      easy: `
+Difficulty level: EASY
+- Focus on definitions, basic facts, and simple recall.
+- Questions should directly test whether the student remembers key terms and concepts.
+- Avoid tricky wording or edge cases.
+- All wrong options should be clearly distinguishable from the correct answer.`,
+      medium: `
+Difficulty level: MEDIUM
+- Focus on conceptual understanding and straightforward application.
+- Questions should require the student to explain why or how something works, not just what it is.
+- Include some application-based scenarios.
+- Wrong options should be plausible but clearly wrong on reflection.`,
+      hard: `
+Difficulty level: HARD
+- Focus on analysis, synthesis, and nuanced understanding.
+- Questions should involve comparing/contrasting concepts, identifying edge cases, or applying knowledge to novel scenarios.
+- All four options should be plausible; the wrong options should represent common misconceptions or subtle mistakes.
+- Avoid straightforward recall questions.`,
+    };
+
+    const difficultyBlock = difficultyGuidelines[difficulty];
+
     let prompt;
     if (notesContent) {
       prompt = `You are an expert AI study assistant.
 Based ONLY on the following study notes, generate exactly 10 multiple-choice quiz questions that test understanding of the content.
+${difficultyBlock}
 
 --- NOTES START ---
 ${notesContent}
@@ -217,6 +254,7 @@ Rules:
     } else {
       prompt = `You are an expert AI study assistant.
 Generate exactly 10 multiple-choice quiz questions on the topic: "${inputDoc.value}".
+${difficultyBlock}
 
 Return ONLY a JSON object with this exact structure:
 {
@@ -266,7 +304,7 @@ Rules:
       }))
     );
 
-    res.json({ quiz: saved });
+    res.json({ quiz: saved, difficulty });
   } catch (err) {
     console.error('generateQuiz error:', err?.response?.data || err.message);
     res.status(500).json({ message: 'Failed to generate quiz.' });

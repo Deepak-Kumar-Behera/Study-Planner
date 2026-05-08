@@ -2,6 +2,18 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../services/api';
 import Card from './Card';
 
+const DIFFICULTY_STYLES = {
+  easy:   { label: 'Easy',   bg: 'bg-green-100',  text: 'text-green-700',  border: 'border-green-300' },
+  medium: { label: 'Medium', bg: 'bg-yellow-100', text: 'text-yellow-700', border: 'border-yellow-300' },
+  hard:   { label: 'Hard',   bg: 'bg-red-100',    text: 'text-red-700',    border: 'border-red-300'   },
+};
+
+const NEXT_DIFFICULTY_HINT = {
+  easy:   'Score ≥ 75% on your next attempt to move to Medium',
+  medium: 'Score ≥ 75% → Hard · Score < 40% → Easy',
+  hard:   'Score < 75% → Medium',
+};
+
 export default function QuizByInputPage({ input, onBack }) {
   const [quizzes, setQuizzes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -10,6 +22,14 @@ export default function QuizByInputPage({ input, onBack }) {
   const [submitted, setSubmitted] = useState(false);
   const [results, setResults] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [difficulty, setDifficulty] = useState('medium');
+
+  // Fetch the current difficulty for this topic on mount
+  useEffect(() => {
+    api.get(`/quiz/difficulty/${input._id}`)
+      .then(res => setDifficulty(res.data.difficulty || 'medium'))
+      .catch(() => {});
+  }, [input._id]);
 
   const fetchQuizzes = useCallback(() => {
     setLoading(true);
@@ -28,7 +48,8 @@ export default function QuizByInputPage({ input, onBack }) {
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      await api.post('/generate/quiz', { inputId: input._id });
+      const res = await api.post('/generate/quiz', { inputId: input._id });
+      if (res.data.difficulty) setDifficulty(res.data.difficulty);
       fetchQuizzes();
     } catch (err) {
       alert('Failed to generate quiz. Please try again.');
@@ -52,6 +73,7 @@ export default function QuizByInputPage({ input, onBack }) {
       const answers = quizzes.map(q => ({ quizId: q._id, selected: selected[q._id] || '' }));
       const res = await api.post('/quiz/submit', { answers });
       setResults(res.data);
+      if (res.data.difficulty) setDifficulty(res.data.difficulty);
       setSubmitted(true);
     } catch (err) {
       alert('Failed to submit quiz.');
@@ -66,10 +88,12 @@ export default function QuizByInputPage({ input, onBack }) {
     setSelected({});
   };
 
+  const diffStyle = DIFFICULTY_STYLES[difficulty] || DIFFICULTY_STYLES.medium;
+
   return (
     <div className="pb-20">
       <button className="mb-4 px-4 py-2 bg-blue-100 text-blue-700 rounded" onClick={onBack}>&larr; Back</button>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <h2 className="text-2xl font-bold">Quiz: <span className="text-blue-700">{input.value}</span></h2>
         {quizzes.length > 0 && !submitted && (
           <button
@@ -82,9 +106,15 @@ export default function QuizByInputPage({ input, onBack }) {
         )}
       </div>
 
+      {/* Difficulty badge */}
+      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-semibold mb-4 ${diffStyle.bg} ${diffStyle.text} ${diffStyle.border}`}>
+        <span>Difficulty: {diffStyle.label}</span>
+        <span className="font-normal opacity-70">· {NEXT_DIFFICULTY_HINT[difficulty]}</span>
+      </div>
+
       {loading || generating ? (
         <div className="flex flex-col items-center justify-center py-16 text-gray-500 text-lg">
-          {generating ? 'Generating quiz from your notes...' : 'Loading...'}
+          {generating ? `Generating ${diffStyle.label} quiz from your notes...` : 'Loading...'}
         </div>
       ) : quizzes.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16">
@@ -99,25 +129,34 @@ export default function QuizByInputPage({ input, onBack }) {
       ) : (
         <>
           {submitted && results && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded flex items-center justify-between">
-              <span className="text-xl font-bold text-blue-700">
-                Score: {results.score} / {results.total}
-              </span>
-              <div className="flex gap-3">
-                <button
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded font-semibold hover:bg-gray-300"
-                  onClick={handleRetake}
-                >
-                  Retake Quiz
-                </button>
-                <button
-                  className="px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 disabled:opacity-60"
-                  onClick={handleGenerate}
-                  disabled={generating}
-                >
-                  Regenerate Quiz
-                </button>
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded">
+              <div className="flex items-center justify-between">
+                <span className="text-xl font-bold text-blue-700">
+                  Score: {results.score} / {results.total}
+                  &nbsp;({Math.round((results.score / results.total) * 100)}%)
+                </span>
+                <div className="flex gap-3">
+                  <button
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded font-semibold hover:bg-gray-300"
+                    onClick={handleRetake}
+                  >
+                    Retake Quiz
+                  </button>
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded font-semibold hover:bg-blue-700 disabled:opacity-60"
+                    onClick={handleGenerate}
+                    disabled={generating}
+                  >
+                    Regenerate Quiz
+                  </button>
+                </div>
               </div>
+              {results.difficulty && (
+                <div className={`mt-3 text-sm font-medium ${DIFFICULTY_STYLES[results.difficulty]?.text}`}>
+                  Next quiz difficulty adjusted to: <span className="font-bold">{DIFFICULTY_STYLES[results.difficulty]?.label}</span>
+                  &nbsp;— {NEXT_DIFFICULTY_HINT[results.difficulty]}
+                </div>
+              )}
             </div>
           )}
           <form onSubmit={e => { e.preventDefault(); handleSubmit(); }}>

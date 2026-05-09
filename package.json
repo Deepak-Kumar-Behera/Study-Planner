@@ -1,5 +1,17 @@
 {
+  "name": "study-planner",
+  "version": "1.0.0",
+  "scripts": {
+    "start:backend": "npm start --prefix backend",
+    "start:frontend": "npm start --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run start:frontend\""
+  },
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

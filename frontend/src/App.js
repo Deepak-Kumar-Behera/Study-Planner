@@ -71,7 +71,7 @@ function App() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold text-blue-600 mb-4">AI Study Planner & Auto Notes Generator</h1>
+        <h1 className="text-3xl font-bold text-blue-600 mb-4">Study Planner</h1>
         <div className="flex space-x-4 mb-4">
           <button
             className={`px-4 py-2 rounded ${authTab === 'login' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border'}`}

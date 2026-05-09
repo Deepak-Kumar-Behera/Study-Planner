@@ -45,7 +45,7 @@ export default function DataByInputPage({ type, input, onBack }) {
   };
 
   return (
-    <div className="pb-20 pl-8">
+    <div className="pb-20 pl-4">
       <div className="sticky top-0 z-20 bg-gray-50/80 backdrop-blur-md py-4 mb-6 border-b border-gray-100 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button

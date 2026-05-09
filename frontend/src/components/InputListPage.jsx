@@ -19,7 +19,7 @@ export default function InputListPage({ type, onSelectInput }) {
   }, [type]);
 
   return (
-    <div className="pb-20 pl-8">
+    <div className="pb-20 pl-4">
       <h2 className="text-2xl font-bold mb-4 capitalize">{type}</h2>
       {loading ? <div>Loading...</div> : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -57,10 +57,33 @@ exports.submitQuiz = async (req, res) => {
     if (quizzes.length > 0) {
       inputId = quizzes[0].inputId || null;
     }
+
+    // Perform Gap Analysis (group by sub-topic)
+    const gapsMap = {};
+    answerResults.forEach(ans => {
+      const quiz = quizzes.find(q => q._id.toString() === ans.quizId);
+      const topic = quiz?.topic || 'General';
+      if (!gapsMap[topic]) {
+        gapsMap[topic] = { score: 0, total: 0 };
+      }
+      gapsMap[topic].total++;
+      if (ans.correct) gapsMap[topic].score++;
+    });
+
+    const gapAnalysis = Object.keys(gapsMap).map(topic => {
+      const { score, total } = gapsMap[topic];
+      const percentage = (score / total) * 100;
+      let status = 'ok';
+      if (percentage < 50) status = 'weak';
+      else if (percentage >= 80) status = 'strong';
+      return { topic, score, total, status };
+    });
+
     const submission = await QuizSubmission.create({
       userId,
       inputId,
       answers: answerResults,
+      gapAnalysis,
       score: correctCount,
       total: answers.length
     });
@@ -76,6 +99,7 @@ exports.submitQuiz = async (req, res) => {
       score: correctCount,
       total: answers.length,
       answers: answerResults,
+      gapAnalysis,
       difficulty: newDifficulty,   // tell the frontend the updated difficulty
     });
   } catch (err) {

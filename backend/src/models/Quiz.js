@@ -5,6 +5,7 @@ const quizQuestionSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   inputId: { type: mongoose.Schema.Types.ObjectId, ref: 'Input', required: true },
   type: { type: String, required: true },
+  topic: { type: String }, // Specific sub-topic within the notes
   question: { type: String, required: true },
   options: { type: [String], required: true }, // Array of 4 options
   answer: { type: String, required: true } // Correct option

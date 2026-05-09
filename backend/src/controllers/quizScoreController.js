@@ -15,6 +15,10 @@ exports.getAllQuizScores = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate('inputId', 'value')
+      .populate({
+        path: 'answers.quizId',
+        select: 'question options answer topic'
+      })
       .lean();
 
     const quizScores = submissions.map(sub => ({
@@ -23,6 +27,17 @@ exports.getAllQuizScores = async (req, res) => {
       score: sub.score,
       total: sub.total,
       submittedAt: sub.submittedAt,
+      gapAnalysis: sub.gapAnalysis || [],
+      // Map populate result back to a flat structure for easier frontend consumption
+      answers: (sub.answers || []).map(a => ({
+        quizId: a.quizId?._id || a.quizId,
+        question: a.quizId?.question || 'Question deleted',
+        options: a.quizId?.options || [],
+        correctAnswer: a.quizId?.answer || '',
+        selected: a.selected,
+        correct: a.correct,
+        topic: a.quizId?.topic || 'General'
+      }))
     }));
 
     res.json({

@@ -67,8 +67,9 @@ export default function DataByInputPage({ type, input, onBack }) {
               />
             </svg>
           </button>
-          <h2 className="text-2xl font-semibold text-gray-900 tracking-tight capitalize">
-            {type} <span className="text-gray-400 mx-2 text-lg font-normal">/</span>
+          <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
+            {type === 'revision' ? 'Progress Tracker' : type === 'plan' ? 'Study Schedule' : type === 'notes' ? 'Subject Notes' : type.charAt(0).toUpperCase() + type.slice(1)} 
+            <span className="text-gray-400 mx-2 text-lg font-normal">/</span>
             <span className="text-blue-600">{input.value}</span>
           </h2>
         </div>
@@ -126,22 +127,47 @@ export default function DataByInputPage({ type, input, onBack }) {
               </div>
             </Card>
           ))}
-          {type === 'revision' && data.map((rev, idx) => (
-            <Card key={rev._id || idx} title={rev.topic}>
-              <div className="mb-2 flex items-center gap-3">
-                {((statusMap[rev._id] || rev.status) !== 'completed') ? (
-                  <button
-                    className="px-4 py-1 rounded-full bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition"
-                    onClick={() => handleStatusChange(rev._id, 'completed')}
-                  >
-                    Mark as Completed
-                  </button>
-                ) : (
-                  <span className="px-4 py-1 rounded-full bg-green-100 text-green-700 border border-green-300 font-bold text-xs">COMPLETED</span>
-                )}
-              </div>
-            </Card>
-          ))}
+          {type === 'revision' && (
+            <div className="bg-white border rounded-lg shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">#</th>
+                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Topic / Subject Area</th>
+                    <th className="px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {data.map((rev, idx) => {
+                    const isCompleted = (statusMap[rev._id] || rev.status) === 'completed';
+                    return (
+                      <tr key={rev._id || idx} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-sm text-gray-400 font-medium">{idx + 1}</td>
+                        <td className="px-6 py-4 text-sm font-semibold text-gray-800">{rev.topic}</td>
+                        <td className="px-6 py-4 text-right">
+                          {isCompleted ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              Done
+                            </span>
+                          ) : (
+                            <button
+                              className="inline-flex items-center px-3 py-1 bg-white border border-blue-600 text-blue-600 text-xs font-bold rounded-md hover:bg-blue-50 transition shadow-sm"
+                              onClick={() => handleStatusChange(rev._id, 'completed')}
+                            >
+                              Mark Complete
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

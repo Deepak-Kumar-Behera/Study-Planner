@@ -157,6 +157,41 @@ export default function QuizByInputPage({ input, onBack }) {
                   &nbsp;— {NEXT_DIFFICULTY_HINT[results.difficulty]}
                 </div>
               )}
+
+              {/* Knowledge Gap Analysis UI */}
+              {results.gapAnalysis && results.gapAnalysis.length > 0 && (
+                <div className="mt-6 border-t pt-4">
+                  <h3 className="text-lg font-bold mb-3 text-gray-800">Knowledge Gap Analysis</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {results.gapAnalysis.map((gap, i) => (
+                      <div key={i} className={`p-3 rounded border ${
+                        gap.status === 'weak' ? 'bg-red-50 border-red-200' : 
+                        gap.status === 'strong' ? 'bg-green-50 border-green-200' : 
+                        'bg-yellow-50 border-yellow-200'
+                      }`}>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-gray-700">{gap.topic}</span>
+                          <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded ${
+                            gap.status === 'weak' ? 'bg-red-200 text-red-800' : 
+                            gap.status === 'strong' ? 'bg-green-200 text-green-800' : 
+                            'bg-yellow-200 text-yellow-800'
+                          }`}>
+                            {gap.status === 'weak' ? 'Weak' : gap.status === 'strong' ? 'Strong' : 'Average'}
+                          </span>
+                        </div>
+                        <div className="text-sm mt-1">
+                          Score: {gap.score} / {gap.total}
+                        </div>
+                        {gap.status === 'weak' && (
+                          <div className="mt-2 text-xs text-red-600 italic">
+                            Suggestion: Re-read the notes for "{gap.topic}" to fill this gap.
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <form onSubmit={e => { e.preventDefault(); handleSubmit(); }}>

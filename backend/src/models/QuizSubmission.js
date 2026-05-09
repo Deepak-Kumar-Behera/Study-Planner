@@ -11,6 +11,14 @@ const quizSubmissionSchema = new mongoose.Schema({
       correct: { type: Boolean, required: true }
     }
   ],
+  gapAnalysis: [
+    {
+      topic: { type: String },
+      score: { type: Number },
+      total: { type: Number },
+      status: { type: String } // 'weak', 'ok', 'strong'
+    }
+  ],
   score: { type: Number, required: true },
   total: { type: Number, required: true }
 });

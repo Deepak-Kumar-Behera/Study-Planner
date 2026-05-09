@@ -240,6 +240,7 @@ Return ONLY a JSON object with this exact structure:
   "quiz": [
     {
       "question": "Question text?",
+      "topic": "Specific Sub-topic Name",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "answer": "Option A"
     }
@@ -248,6 +249,7 @@ Return ONLY a JSON object with this exact structure:
 
 Rules:
 - Each question must have exactly 4 options.
+- The "topic" field must be the name of the section or sub-topic the question is about (e.g., from the note titles).
 - The "answer" field must be exactly one of the 4 option strings.
 - Base all questions strictly on the notes provided above.
 - Return ONLY the JSON, no explanation or markdown outside the JSON.`;
@@ -261,6 +263,7 @@ Return ONLY a JSON object with this exact structure:
   "quiz": [
     {
       "question": "Question text?",
+      "topic": "Specific Sub-topic Name",
       "options": ["Option A", "Option B", "Option C", "Option D"],
       "answer": "Option A"
     }
@@ -269,6 +272,7 @@ Return ONLY a JSON object with this exact structure:
 
 Rules:
 - Each question must have exactly 4 options.
+- The "topic" field must be the name of the sub-topic or specific area the question is about.
 - The "answer" field must be exactly one of the 4 option strings.
 - Return ONLY the JSON, no explanation or markdown outside the JSON.`;
     }
@@ -298,6 +302,7 @@ Rules:
         userId,
         inputId,
         type: inputDoc.type || 'topic',
+        topic: q.topic || 'General',
         question: q.question,
         options: q.options,
         answer: q.answer,

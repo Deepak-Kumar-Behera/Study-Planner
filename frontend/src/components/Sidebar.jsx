@@ -37,7 +37,7 @@ const Sidebar = ({ active, onSelect, onLogout, user }) => {
   return (
     <aside className="bg-gray-50 border-r border-gray-200 w-56 h-screen flex flex-col py-6 px-3 fixed left-0 top-0 z-30">
       <div className="mb-8 px-2">
-        <span className="text-lg font-extrabold text-gray-800 tracking-tight">AI Study Planner</span>
+        <span className="text-lg font-extrabold text-gray-800 tracking-tight">Study Planner</span>
       </div>
 
       {user && (

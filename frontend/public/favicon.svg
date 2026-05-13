@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Cap board (top flat square rotated) -->
+  <polygon points="50,10 95,35 50,60 5,35" fill="#4F46E5"/>
+  <!-- Cap board highlight -->
+  <polygon points="50,10 95,35 72,47 50,35 28,47 5,35" fill="#6366F1"/>
+  <!-- Cap base cylinder -->
+  <rect x="34" y="55" width="32" height="23" rx="5" fill="#4F46E5"/>
+  <!-- Tassel cord -->
+  <line x1="93" y1="35" x2="93" y2="62" stroke="#F59E0B" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Tassel end -->
+  <circle cx="93" cy="67" r="6" fill="#F59E0B"/>
+</svg>

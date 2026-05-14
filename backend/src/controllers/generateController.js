@@ -100,9 +100,21 @@ function robustCleanAIResponse(aiText) {
 }
 
 exports.generate = async (req, res) => {
-  const { input, type, userId } = req.body;
+  const input  = (req.body.input  || '').trim();
+  const type   = (req.body.type   || '').trim();
+  const userId =  req.body.userId;
+
   if (!input || !type || !userId) {
     return res.status(400).json({ message: 'Input, type, and userId are required.' });
+  }
+  if (input.length < 3) {
+    return res.status(400).json({ message: 'Study topic must be at least 3 characters.' });
+  }
+  if (input.length > 200) {
+    return res.status(400).json({ message: 'Study topic cannot exceed 200 characters.' });
+  }
+  if (!['topic', 'syllabus'].includes(type)) {
+    return res.status(400).json({ message: 'Invalid type. Must be topic or syllabus.' });
   }
   try {
     // Find or create the input in the Input collection (scoped to this user)

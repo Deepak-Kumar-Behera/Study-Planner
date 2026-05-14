@@ -6,12 +6,21 @@ const SyllabusInput = ({ onSubmit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!syllabus.trim()) {
+    const trimmed = syllabus.trim();
+    if (!trimmed) {
       setError('Please enter a syllabus or topic.');
       return;
     }
+    if (trimmed.length < 3) {
+      setError('Input must be at least 3 characters.');
+      return;
+    }
+    if (trimmed.length > 1000) {
+      setError('Input cannot exceed 1000 characters.');
+      return;
+    }
     setError('');
-    onSubmit(syllabus.split(',').map(s => s.trim()).filter(Boolean));
+    onSubmit(trimmed.split(',').map(s => s.trim()).filter(Boolean));
   };
 
   return (

@@ -12,6 +12,9 @@ app.use(express.json());
 // Auth routes
 app.use('/api/auth', require('./routes/auth'));
 
+// Admin routes
+app.use('/api/admin', require('./routes/admin'));
+
 
 // Progress route
 app.use('/api/progress', require('./routes/progress'));

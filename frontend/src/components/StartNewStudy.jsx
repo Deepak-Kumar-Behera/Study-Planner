@@ -1,21 +1,45 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 
+const MAX_LEN = 200;
+
+const validateInput = (value) => {
+  const trimmed = value.trim();
+  if (!trimmed) return 'Study topic is required.';
+  if (trimmed.length < 3) return 'Topic must be at least 3 characters.';
+  if (trimmed.length > MAX_LEN) return `Topic cannot exceed ${MAX_LEN} characters.`;
+  return '';
+};
+
 const StartNewStudy = ({ userId, onPlanGenerated }) => {
   const [input, setInput] = useState('');
   const [type, setType] = useState('syllabus');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [inputError, setInputError] = useState('');
+  const [serverError, setServerError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleChange = (e) => {
+    const val = e.target.value;
+    if (val.length > MAX_LEN) return;          // hard cap while typing
+    setInput(val);
+    if (submitted) setInputError(validateInput(val));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setServerError('');
+    setSubmitted(true);
+    const err = validateInput(input);
+    setInputError(err);
+    if (err) return;
+
     setLoading(true);
     try {
-      const res = await api.post('/generate', { input, type, userId });
+      const res = await api.post('/generate', { input: input.trim(), type, userId });
       onPlanGenerated && onPlanGenerated(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to generate study plan.');
+      setServerError(err.response?.data?.message || err.message || 'Failed to generate study plan.');
     } finally {
       setLoading(false);
     }
@@ -29,12 +53,24 @@ const StartNewStudy = ({ userId, onPlanGenerated }) => {
           <label className="block text-sm font-semibold text-gray-600 mb-1">Study Topic</label>
           <input
             type="text"
-            className="w-full border border-gray-200 rounded px-4 py-2 focus:border-blue-500 focus:outline-none"
+            className={`w-full border rounded px-4 py-2 focus:outline-none focus:ring-2 ${
+              inputError
+                ? 'border-red-400 focus:ring-red-300'
+                : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
+            }`}
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={handleChange}
             placeholder="e.g. Quantum Computing"
-            required
+            maxLength={MAX_LEN}
           />
+          <div className="flex justify-between mt-1">
+            {inputError
+              ? <p className="text-red-500 text-xs">{inputError}</p>
+              : <span />}
+            <p className={`text-xs ml-auto ${
+              input.length >= MAX_LEN ? 'text-red-500' : 'text-gray-400'
+            }`}>{input.length}/{MAX_LEN}</p>
+          </div>
         </div>
         <div>
           <label className="block text-sm font-semibold text-gray-600 mb-1">Structure Type</label>
@@ -62,9 +98,9 @@ const StartNewStudy = ({ userId, onPlanGenerated }) => {
             </button>
           </div>
         </div>
-        {error && (
+        {serverError && (
           <div className="p-2 bg-red-50 text-red-600 rounded text-xs font-semibold border border-red-100">
-            {error}
+            {serverError}
           </div>
         )}
         <button
